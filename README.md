@@ -2,7 +2,7 @@
 Testing of a Dense Autoencoder with MNIST
 
 ## Description
-On this project we used the MNIST dataset to test the limits of a dense autoencoder with bottlenecks of 100, 50 and 10.
+On this project I used the MNIST dataset to test the limits of a dense autoencoder with bottlenecks of 100, 50 and 10.
 
 ## Build Status
 Complete.
