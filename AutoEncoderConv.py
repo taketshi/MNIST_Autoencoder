@@ -1,50 +1,33 @@
-
-import torch
 import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
+import torch.optim as optim
 import time
 
+class AutoEncoderConv(nn.Module):
+    def __init__(self):
+        super(AutoEncoderConv, self).__init__()
 
-class AutoEncoder(nn.Module):
+        self.encoder = nn.Sequential(
+            nn.Conv2d( in_channels = 1, out_channels = 4, kernel_size = 3, padding=1),
+            nn.LeakyReLU(negative_slope = 0.01),
+            nn.MaxPool2d(kernel_size = 2, stride=2),
+            nn.Conv2d(in_channels = 4, out_channels = 4, kernel_size = 3, padding=1),
+            nn.LeakyReLU(negative_slope = 0.01),
+            nn.MaxPool2d(kernel_size = 2, stride=2))
 
-    def __init__(self, encoder_layers, decoder_layers):
-        super(AutoEncoder, self).__init__()
-
-        # Save bottleneck size
-        self.bottleneck = encoder_layers[-1]
-
-        # Create Encoder
-        encoder_layers_torch = []
-        enc_len = len(encoder_layers)
+        self.decoder = nn.Sequential(             
+            nn.ConvTranspose2d(in_channels = 4, out_channels = 4, kernel_size = 2, stride = 2),
+            nn.LeakyReLU(negative_slope = 0.01),
+            nn.ConvTranspose2d(in_channels = 4, out_channels = 1, kernel_size = 2, stride = 2),
+            nn.Sigmoid())
         
-        # Loop through encoder_layers and add layers
-        for i in range(enc_len - 1):
-            encoder_layers_torch.append(nn.Linear(encoder_layers[i], encoder_layers[i+1]))
-            encoder_layers_torch.append(nn.ReLU())
-
-        self.encoder = nn.Sequential(*encoder_layers_torch)
-
-        # Create Decoder
-        decoder_layers_torch = []
-        dec_len = len(decoder_layers)
-
-        # Loop through decoder_layers and add layers
-        for i in range(dec_len - 1):
-            decoder_layers_torch.append(nn.Linear(decoder_layers[i], decoder_layers[i+1]))
-            # Last one does not have activation function
-            if i != dec_len - 2:
-                decoder_layers_torch.append(nn.ReLU())
-
-        self.decoder = nn.Sequential(*decoder_layers_torch)
-        
-    def forward(self, input):
-        output = self.encoder(input)
-        output = self.decoder(output)
-        return output
-
-    def train(self, dataset, criterion = 'mse', optimizer = 'sgd', lr = 0.01, batch_size = 1, epochs = 5, verbose = 5):
+    
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+    
+    def train(self, dataset, criterion = 'mse', optimizer = 'adam', lr = 0.01, batch_size = 1, epochs = 5, verbose = 5):
         
         data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
